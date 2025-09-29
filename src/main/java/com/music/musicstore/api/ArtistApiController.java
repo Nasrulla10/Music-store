@@ -1,4 +1,4 @@
-package musicstore.api;
+package com.music.musicstore.api;
 
 import com.music.musicstore.dto.MusicDto;
 import com.music.musicstore.models.music.Music;
@@ -100,6 +100,7 @@ public class ArtistApiController {
                     .body(new ApiResponse(false, "Failed to upload music: " + e.getMessage(), null));
         }
     }
+
     @GetMapping("/music/my-music")
     public ResponseEntity<?> getMyMusic(
             @RequestParam(defaultValue = "0") int page,
@@ -251,3 +252,124 @@ public class ArtistApiController {
         }
     }
 
+    @GetMapping("/analytics/sales")
+    public ResponseEntity<?> getSalesAnalytics(@AuthenticationPrincipal UserDetails userDetails) {
+        logger.debug("Fetching sales analytics for artist: {}", userDetails.getUsername());
+
+        try {
+            Map<String, Object> analytics = musicService.getArtistSalesAnalytics(userDetails.getUsername());
+            return ResponseEntity.ok(new ApiResponse(true, "Sales analytics retrieved successfully", analytics));
+
+        } catch (Exception e) {
+            logger.error("Error fetching sales analytics for artist: {}", userDetails.getUsername(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse(false, "Failed to fetch analytics: " + e.getMessage(), null));
+        }
+    }
+
+    @GetMapping("/analytics/reviews")
+    public ResponseEntity<?> getReviewsAnalytics(@AuthenticationPrincipal UserDetails userDetails) {
+        logger.debug("Fetching review analytics for artist: {}", userDetails.getUsername());
+
+        try {
+            Map<String, Object> analytics = reviewService.getArtistReviewsAnalytics(userDetails.getUsername());
+            return ResponseEntity.ok(new ApiResponse(true, "Review analytics retrieved successfully", analytics));
+
+        } catch (Exception e) {
+            logger.error("Error fetching review analytics for artist: {}", userDetails.getUsername(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse(false, "Failed to fetch review analytics: " + e.getMessage(), null));
+        }
+    }
+
+    @GetMapping("/profile")
+    public ResponseEntity<?> getArtistProfile(@AuthenticationPrincipal UserDetails userDetails) {
+        logger.debug("Fetching profile for artist: {}", userDetails.getUsername());
+
+        try {
+            Map<String, Object> profile = new HashMap<>();
+            profile.put("username", userDetails.getUsername());
+            profile.put("authorities", userDetails.getAuthorities());
+
+            // Get basic stats
+            long musicCount = musicService.countMusicByArtist(userDetails.getUsername());
+            profile.put("totalTracks", musicCount);
+
+            return ResponseEntity.ok(new ApiResponse(true, "Profile retrieved successfully", profile));
+
+        } catch (Exception e) {
+            logger.error("Error fetching profile for artist: {}", userDetails.getUsername(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse(false, "Failed to fetch profile: " + e.getMessage(), null));
+        }
+    }
+
+    @GetMapping("/dashboard-stats")
+    public ResponseEntity<?> getDashboardStats(@AuthenticationPrincipal UserDetails userDetails) {
+        logger.debug("Fetching dashboard stats for artist: {}", userDetails.getUsername());
+
+        try {
+            Map<String, Object> stats = new HashMap<>();
+
+            // Basic stats
+            long totalTracks = musicService.countMusicByArtist(userDetails.getUsername());
+            stats.put("totalTracks", totalTracks);
+
+            // Sales analytics
+            Map<String, Object> salesAnalytics = musicService.getArtistSalesAnalytics(userDetails.getUsername());
+            stats.put("salesAnalytics", salesAnalytics);
+
+            // Review analytics
+            Map<String, Object> reviewAnalytics = reviewService.getArtistReviewsAnalytics(userDetails.getUsername());
+            stats.put("reviewAnalytics", reviewAnalytics);
+
+            return ResponseEntity.ok(new ApiResponse(true, "Dashboard stats retrieved successfully", stats));
+
+        } catch (Exception e) {
+            logger.error("Error fetching dashboard stats for artist: {}", userDetails.getUsername(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse(false, "Failed to fetch dashboard stats: " + e.getMessage(), null));
+        }
+    }
+
+    // Helper method to convert Music entity to MusicDto
+    private MusicDto convertToDto(Music music) {
+        MusicDto dto = new MusicDto();
+        dto.setId(music.getId());
+        dto.setName(music.getName());
+        dto.setDescription(music.getDescription());
+        dto.setPrice(music.getPrice());
+        dto.setImageUrl(music.getImageUrl());
+        dto.setAudioFilePath(music.getAudioFilePath());
+        dto.setCategory(music.getCategory());
+        dto.setArtist(music.getArtistUsername() != null ? music.getArtistUsername() : "Unknown Artist");
+        dto.setAlbum(music.getAlbumName());
+        dto.setGenre(music.getGenre());
+        dto.setReleaseYear(music.getReleaseYear());
+        dto.setCreatedAt(music.getCreatedAt());
+        dto.setAverageRating(music.getAverageRating() != null ? music.getAverageRating().doubleValue() : 0.0);
+        dto.setTotalReviews(music.getTotalReviews());
+        return dto;
+    }
+
+    public static class ApiResponse {
+        private boolean success;
+        private String message;
+        private Object data;
+
+        public ApiResponse(boolean success, String message, Object data) {
+            this.success = success;
+            this.message = message;
+            this.data = data;
+        }
+
+        public boolean isSuccess() { return success; }
+        public void setSuccess(boolean success) { this.success = success; }
+
+        public String getMessage() { return message; }
+        public void setMessage(String message) { this.message = message; }
+
+        public Object getData() { return data; }
+        public void setData(Object data) { this.data = data; }
+    }
+}
