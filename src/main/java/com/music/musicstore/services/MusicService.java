@@ -698,4 +698,88 @@ public class MusicService {
                 customerId.equals(music.getFlaggedByCustomerId());
     }
 
+    public void saveCart(Object cart) {
+        throw new RuntimeException("saveCart method not implemented - use CartService instead");
+    }
+
+    // Missing methods for AdminApiController
+
+    public Page<Music> getAllFlaggedMusic(int page, int size) {
+        logger.debug("Getting all flagged music: page={}, size={}", page, size);
+
+        if (page < 0) {
+            throw new ValidationException("Page number cannot be negative");
+        }
+        if (size <= 0) {
+            throw new ValidationException("Page size must be positive");
+        }
+
+        try {
+            Pageable pageable = PageRequest.of(page, size);
+            return musicRepository.findByIsFlaggedTrue(pageable);
+        } catch (Exception e) {
+            logger.error("Error getting flagged music: page={}, size={}", page, size, e);
+            throw new RuntimeException("Failed to get flagged music", e);
+        }
+    }
+
+    public void unflagMusic(Long musicId) {
+        logger.debug("Unflagging music with ID: {}", musicId);
+
+        if (musicId == null) {
+            throw new ValidationException("Music ID cannot be null");
+        }
+
+        try {
+            Music music = musicRepository.findById(musicId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Music", musicId.toString()));
+
+            music.setFlagged(false);
+            music.setFlaggedAt(null);
+            music.setFlaggedByCustomerId(null);
+
+            musicRepository.save(music);
+            logger.info("Successfully unflagged music ID: {}", musicId);
+        } catch (Exception e) {
+            logger.error("Error unflagging music ID: {}", musicId, e);
+            throw new RuntimeException("Failed to unflag music", e);
+        }
+    }
+
+    public void deleteFlaggedMusic(Long musicId) {
+        logger.debug("Deleting flagged music with ID: {}", musicId);
+
+        if (musicId == null) {
+            throw new ValidationException("Music ID cannot be null");
+        }
+
+        try {
+            Music music = musicRepository.findById(musicId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Music", musicId.toString()));
+
+            if (music.getIsFlagged() == null || !music.getIsFlagged()) {
+                throw new ValidationException("Music is not flagged and cannot be deleted as flagged content");
+            }
+
+            musicRepository.deleteById(musicId);
+            logger.info("Successfully deleted flagged music ID: {}", musicId);
+        } catch (Exception e) {
+            logger.error("Error deleting flagged music ID: {}", musicId, e);
+            throw new RuntimeException("Failed to delete flagged music", e);
+        }
+    }
+
+    public long getFlaggedMusicCount() {
+        logger.debug("Getting count of flagged music");
+
+        try {
+            return musicRepository.countByIsFlaggedTrue();
+        } catch (Exception e) {
+            logger.error("Error getting flagged music count", e);
+            throw new RuntimeException("Failed to get flagged music count", e);
+        }
+    }
+
+
+
 
