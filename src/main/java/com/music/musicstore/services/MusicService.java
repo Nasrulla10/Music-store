@@ -780,6 +780,137 @@ public class MusicService {
         }
     }
 
+    public double getAverageRatingAcrossAllMusic() {
+        logger.debug("Getting average rating across all music");
+
+        try {
+            Double avgRating = musicRepository.getAverageRating();
+            return avgRating != null ? avgRating : 0.0;
+        } catch (Exception e) {
+            logger.error("Error getting average rating across all music", e);
+            throw new RuntimeException("Failed to get average rating", e);
+        }
+    }
+
+    public List<Map<String, Object>> getTopSellingMusic(int limit) {
+        logger.debug("Getting top selling music with limit: {}", limit);
+
+        if (limit <= 0) {
+            throw new ValidationException("Limit must be positive");
+        }
+
+        try {
+            // For now, return top-rated music as we don't have sales data
+            Pageable pageable = PageRequest.of(0, limit);
+            Page<Music> topMusic = musicRepository.findAllByOrderByAverageRatingDesc(pageable);
+
+            return topMusic.getContent().stream()
+                    .map(music -> {
+                        Map<String, Object> musicData = new HashMap<>();
+                        musicData.put("id", music.getId());
+                        musicData.put("name", music.getName());
+                        musicData.put("artist", music.getArtistUsername());
+                        musicData.put("genre", music.getGenre());
+                        musicData.put("price", music.getPrice());
+                        musicData.put("averageRating", music.getAverageRating());
+                        musicData.put("totalReviews", music.getTotalReviews());
+                        musicData.put("sales", 0); // Placeholder - would need actual sales data
+                        return musicData;
+                    })
+                    .toList();
+        } catch (Exception e) {
+            logger.error("Error getting top selling music with limit: {}", limit, e);
+            throw new RuntimeException("Failed to get top selling music", e);
+        }
+    }
+
+    public Map<String, Long> getMusicCountByGenre() {
+        logger.debug("Getting music count by genre");
+
+        try {
+            List<Object[]> results = musicRepository.countByGenreGroupBy();
+            Map<String, Long> genreCount = new HashMap<>();
+
+            for (Object[] result : results) {
+                String genre = (String) result[0];
+                Long count = (Long) result[1];
+                genreCount.put(genre != null ? genre : "Unknown", count);
+            }
+
+            logger.info("Successfully retrieved music count by genre: {} genres found", genreCount.size());
+            return genreCount;
+        } catch (Exception e) {
+            logger.error("Error getting music count by genre", e);
+            throw new RuntimeException("Failed to get music count by genre", e);
+        }
+    }
+
+    public Map<String, Long> getMusicCountByCategory() {
+        logger.debug("Getting music count by category");
+
+        try {
+            List<Object[]> results = musicRepository.countByCategoryGroupBy();
+            Map<String, Long> categoryCount = new HashMap<>();
+
+            for (Object[] result : results) {
+                String category = (String) result[0];
+                Long count = (Long) result[1];
+                categoryCount.put(category != null ? category : "Unknown", count);
+            }
+
+            logger.info("Successfully retrieved music count by category: {} categories found", categoryCount.size());
+            return categoryCount;
+        } catch (Exception e) {
+            logger.error("Error getting music count by category", e);
+            throw new RuntimeException("Failed to get music count by category", e);
+        }
+    }
+
+    public Map<String, Object> getArtistPerformanceAnalytics() {
+        logger.debug("Getting artist performance analytics");
+
+        try {
+            Map<String, Object> analytics = new HashMap<>();
+
+            // Get all unique artists and their performance metrics
+            List<Object[]> artistStats = musicRepository.getArtistPerformanceStats();
+            List<Map<String, Object>> artistPerformance = new ArrayList<>();
+
+            for (Object[] stat : artistStats) {
+                String artistUsername = (String) stat[0];
+                Long trackCount = (Long) stat[1];
+                Double avgRating = (Double) stat[2];
+                Integer totalReviews = (Integer) stat[3];
+
+                Map<String, Object> artistData = new HashMap<>();
+                artistData.put("artistUsername", artistUsername);
+                artistData.put("totalTracks", trackCount);
+                artistData.put("averageRating", avgRating != null ? avgRating : 0.0);
+                artistData.put("totalReviews", totalReviews != null ? totalReviews : 0);
+                artistData.put("totalSales", 0); // Placeholder - would need actual sales data
+                artistData.put("totalRevenue", 0.0); // Placeholder - would need actual sales data
+
+                artistPerformance.add(artistData);
+            }
+
+            // Sort by average rating descending
+            artistPerformance.sort((a, b) ->
+                    Double.compare((Double) b.get("averageRating"), (Double) a.get("averageRating")));
+
+            analytics.put("artistPerformance", artistPerformance);
+            analytics.put("totalArtists", artistPerformance.size());
+            analytics.put("topPerformingArtists", artistPerformance.stream().limit(10).toList());
+
+            logger.info("Successfully retrieved artist performance analytics for {} artists", artistPerformance.size());
+            return analytics;
+        } catch (Exception e) {
+            logger.error("Error getting artist performance analytics", e);
+            throw new RuntimeException("Failed to get artist performance analytics", e);
+        }
+    }
+}
+
+
 
 
 
