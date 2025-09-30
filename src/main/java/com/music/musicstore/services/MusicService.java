@@ -245,3 +245,157 @@ public class MusicService {
             logger.error("Username is null or empty");
             throw new ValidationException("Username cannot be null or empty");
         }
+
+        try {
+            // Implementation to get music that the customer has purchased and can download
+            // This would need OrderService integration to check purchased items
+            logger.warn("Downloadable music feature not yet implemented for user: {}", username);
+            return List.of(); // Placeholder
+        } catch (Exception e) {
+            logger.error("Error getting downloadable music for user: {}", username, e);
+            throw new RuntimeException("Failed to get downloadable music", e);
+        }
+    }
+
+    public ResponseEntity<Resource> downloadMusic(Long musicId, String username) {
+        logger.debug("Downloading music ID: {} for user: {}", musicId, username);
+
+        if (musicId == null) {
+            logger.error("Music ID is null");
+            throw new ValidationException("Music ID cannot be null");
+        }
+
+        if (username == null || username.trim().isEmpty()) {
+            logger.error("Username is null or empty");
+            throw new ValidationException("Username cannot be null or empty");
+        }
+
+        try {
+            // Implementation to provide music file for download
+            // This would need to validate purchase and return the music file
+            logger.error("Music download feature not yet implemented for music ID: {} and user: {}", musicId, username);
+            throw new BusinessRuleException("Music download not yet implemented");
+        } catch (Exception e) {
+            logger.error("Error downloading music ID: {} for user: {}", musicId, username, e);
+            throw e;
+        }
+    }
+
+    public List<Object> getUserPlaylists(String username) {
+        logger.debug("Getting playlists for user: {}", username);
+
+        if (username == null || username.trim().isEmpty()) {
+            logger.error("Username is null or empty");
+            throw new ValidationException("Username cannot be null or empty");
+        }
+
+        try {
+            // Implementation to get user playlists
+            // This would need a Playlist entity and service
+            logger.warn("Playlist feature not yet implemented for user: {}", username);
+            return List.of(); // Placeholder
+        } catch (Exception e) {
+            logger.error("Error getting playlists for user: {}", username, e);
+            throw new RuntimeException("Failed to get user playlists", e);
+        }
+    }
+
+    public Object createPlaylist(String username, String name, String description) {
+        logger.debug("Creating playlist '{}' for user: {}", name, username);
+
+        if (username == null || username.trim().isEmpty()) {
+            logger.error("Username is null or empty");
+            throw new ValidationException("Username cannot be null or empty");
+        }
+
+        if (name == null || name.trim().isEmpty()) {
+            logger.error("Playlist name is null or empty");
+            throw new ValidationException("Playlist name cannot be null or empty");
+        }
+
+        try {
+            // Implementation to create a new playlist
+            // This would need a Playlist entity and service
+            logger.error("Playlist creation feature not yet implemented for user: {} and playlist: {}", username, name);
+            throw new BusinessRuleException("Playlist creation not yet implemented");
+        } catch (Exception e) {
+            logger.error("Error creating playlist '{}' for user: {}", name, username, e);
+            throw e;
+        }
+    }
+
+    public void addToPlaylist(Long playlistId, Long musicId, String username) {
+        logger.debug("Adding music ID: {} to playlist ID: {} for user: {}", musicId, playlistId, username);
+
+        if (playlistId == null) {
+            logger.error("Playlist ID is null");
+            throw new ValidationException("Playlist ID cannot be null");
+        }
+
+        if (musicId == null) {
+            logger.error("Music ID is null");
+            throw new ValidationException("Music ID cannot be null");
+        }
+
+        if (username == null || username.trim().isEmpty()) {
+            logger.error("Username is null or empty");
+            throw new ValidationException("Username cannot be null or empty");
+        }
+
+        try {
+            // Implementation to add music to playlist
+            // This would need a Playlist entity and service
+            logger.error("Add to playlist feature not yet implemented");
+            throw new BusinessRuleException("Add to playlist not yet implemented");
+        } catch (Exception e) {
+            logger.error("Error adding music ID: {} to playlist ID: {} for user: {}", musicId, playlistId, username, e);
+            throw e;
+        }
+    }
+
+    public void removeFromPlaylist(Long playlistId, Long musicId, String username) {
+        logger.debug("Removing music ID: {} from playlist ID: {} for user: {}", musicId, playlistId, username);
+
+        if (playlistId == null) {
+            logger.error("Playlist ID is null");
+            throw new ValidationException("Playlist ID cannot be null");
+        }
+
+        if (musicId == null) {
+            logger.error("Music ID is null");
+            throw new ValidationException("Music ID cannot be null");
+        }
+
+        if (username == null || username.trim().isEmpty()) {
+            logger.error("Username is null or empty");
+            throw new ValidationException("Username cannot be null or empty");
+        }
+
+        try {
+            // Implementation to remove music from playlist
+            // This would need a Playlist entity and service
+            logger.error("Remove from playlist feature not yet implemented");
+            throw new BusinessRuleException("Remove from playlist not yet implemented");
+        } catch (Exception e) {
+            logger.error("Error removing music ID: {} from playlist ID: {} for user: {}", musicId, playlistId, username, e);
+            throw e;
+        }
+    }
+
+    // Missing methods needed by StaffApiController analytics
+
+    public Map<String, Object> getMusicPerformanceReport(LocalDate startDate, LocalDate endDate) {
+        Map<String, Object> report = new HashMap<>();
+
+        // Get music performance metrics
+        report.put("totalMusicTracks", musicRepository.count());
+        report.put("mostPopularGenres", getMostPopularGenres());
+        report.put("topSellingMusic", getTopSellingMusic(startDate, endDate));
+        report.put("newMusicAdded", getNewMusicCount(startDate, endDate));
+        report.put("musicByGenreDistribution", getMusicByGenreDistribution());
+        report.put("averageRating", getAverageMusicRating());
+        report.put("period", startDate + " to " + endDate);
+
+        return report;
+    }
+
