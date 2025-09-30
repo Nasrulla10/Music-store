@@ -1,4 +1,4 @@
- package com.music.musicstore.dto;
+package com.music.musicstore.dto;
 
 import com.music.musicstore.models.music.Music;
 import java.util.List;
