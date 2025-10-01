@@ -8,11 +8,15 @@ import com.music.musicstore.dto.ErrorResponse;
 import com.music.musicstore.dto.TicketReplyRequest;
 import com.music.musicstore.dto.TicketStatusUpdateRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/staff")
@@ -25,6 +29,9 @@ public class StaffApiController {
 
     @Autowired
     private StaffService staffService;
+
+    @Autowired
+    private com.music.musicstore.dto.TicketMessageMapper ticketMessageMapper;
 
     // Enhanced ticket management for staff
     @GetMapping("/tickets")
@@ -84,7 +91,11 @@ public class StaffApiController {
     @GetMapping("/tickets/{ticketId}/messages")
     public ResponseEntity<?> getTicketMessages(@PathVariable Long ticketId) {
         try {
-            return ResponseEntity.ok(ticketService.getTicketMessages(ticketId));
+            List<TicketMessage> messages = ticketService.getTicketMessages(ticketId);
+            List<com.music.musicstore.dto.TicketMessageDto> dtos = messages.stream()
+                    .map(ticketMessageMapper::toDto)
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(dtos);
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                 .body(new ErrorResponse("Failed to fetch ticket messages: " + e.getMessage()));
@@ -103,7 +114,8 @@ public class StaffApiController {
 
             TicketMessage message = ticketService.addStaffReply(ticketId, request.getMessage(), staff1);
             logger.info("Staff {} replied to ticket {}", staff.getUsername(), ticketId);
-            return ResponseEntity.ok(message);
+            com.music.musicstore.dto.TicketMessageDto dto = ticketMessageMapper.toDto(message);
+            return ResponseEntity.status(HttpStatus.CREATED).body(dto);
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                 .body(new ErrorResponse("Failed to reply to ticket: " + e.getMessage()));
