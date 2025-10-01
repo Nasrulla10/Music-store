@@ -283,5 +283,45 @@ public class ArtistService {
             logger.error("Error finding artist by ID: {}", id, e);
             throw new RuntimeException("Failed to find artist by ID", e);
         }
+    }
+
+    public Artist createArtist(Artist artist) {
+        logger.debug("Creating new artist: {}", artist != null ? artist.getUserName() : "null");
+
+        if (artist == null) {
+            logger.error("Artist object is null");
+            throw new ValidationException("Artist cannot be null");
+        }
+
+        if (artist.getUserName() == null || artist.getUserName().trim().isEmpty()) {
+            logger.error("Artist username is null or empty");
+            throw new ValidationException("Artist username cannot be null or empty");
+        }
+
+        if (artist.getPassword() == null || artist.getPassword().trim().isEmpty()) {
+            logger.error("Artist password is null or empty");
+            throw new ValidationException("Artist password cannot be null or empty");
+        }
+
+        try {
+            // Check if username already exists
+            Optional<Artist> existingArtist = artistRepository.findByUserName(artist.getUserName());
+            if (existingArtist.isPresent()) {
+                logger.error("Username already exists: {}", artist.getUserName());
+                throw new BusinessRuleException("Username already exists: " + artist.getUserName());
+            }
+
+            artist.setPassword(passwordEncoder.encode(artist.getPassword()));
+            Artist savedArtist = artistRepository.save(artist);
+
+            logger.info("Successfully created artist: {}", savedArtist.getUserName());
+            return savedArtist;
+        } catch (Exception e) {
+            logger.error("Error creating artist: {}", artist.getUserName(), e);
+            throw e;
+        }
+    }
+}
+
 
 
