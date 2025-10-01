@@ -204,4 +204,84 @@ public class ArtistService {
             logger.error("Artist ID is null");
             throw new ValidationException("Artist ID cannot be null");
         }
+        try {
+            Artist artist = artistRepository.findById(id)
+                    .orElseThrow(() -> {
+                        logger.error("Artist not found with ID: {}", id);
+                        return new ResourceNotFoundException("Artist", id.toString());
+                    });
+
+            logger.info("Successfully found artist by ID: {}", id);
+            return artist;
+        } catch (Exception e) {
+            logger.error("Error finding artist by ID: {}", id, e);
+            throw e;
+        }
+    }
+
+    public List<Artist> getAllArtists() {
+        logger.debug("Retrieving all artists");
+
+        try {
+            List<Artist> artists = artistRepository.findAll();
+            logger.info("Successfully retrieved {} artists", artists.size());
+            return artists;
+        } catch (Exception e) {
+            logger.error("Error retrieving all artists", e);
+            throw new RuntimeException("Failed to retrieve artists", e);
+        }
+    }
+
+    public long count() {
+        logger.debug("Counting total artists");
+
+        try {
+            long count = artistRepository.count();
+            logger.info("Total artist count: {}", count);
+            return count;
+        } catch (Exception e) {
+            logger.error("Error counting artists", e);
+            throw new RuntimeException("Failed to count artists", e);
+        }
+    }
+
+    public Artist save(Artist artist) {
+        logger.debug("Saving artist: {}", artist != null ? artist.getUserName() : "null");
+
+        if (artist == null) {
+            logger.error("Artist object is null");
+            throw new ValidationException("Artist cannot be null");
+        }
+
+        try {
+            Artist savedArtist = artistRepository.save(artist);
+            logger.info("Successfully saved artist: {}", savedArtist.getUserName());
+            return savedArtist;
+        } catch (Exception e) {
+            logger.error("Error saving artist: {}", artist.getUserName(), e);
+            throw new RuntimeException("Failed to save artist", e);
+        }
+    }
+
+    public Optional<Artist> findByIdOptional(Long id) {
+        logger.debug("Finding artist by ID (optional): {}", id);
+
+        if (id == null) {
+            logger.error("Artist ID is null");
+            throw new ValidationException("Artist ID cannot be null");
+        }
+
+        try {
+            Optional<Artist> artist = artistRepository.findById(id);
+            if (artist.isPresent()) {
+                logger.info("Successfully found artist by ID: {}", id);
+            } else {
+                logger.debug("Artist not found by ID: {}", id);
+            }
+            return artist;
+        } catch (Exception e) {
+            logger.error("Error finding artist by ID: {}", id, e);
+            throw new RuntimeException("Failed to find artist by ID", e);
+        }
+
 
