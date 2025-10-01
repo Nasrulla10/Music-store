@@ -1,65 +1,136 @@
-@Repository
-public interface MusicRepository extends JpaRepository<Music, Long> {
+package com.music.musicstore.models.users;
 
-    List<Music> findByCategory(String category);
+import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
-    List<Music> findByArtistUsername(String artistUsername);
+import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.Collections;
 
-    List<Music> findByGenre(String genre);
+@Entity
+@Table(name = "artists")
+public class Artist implements UserDetails {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    List<Music> findByReleaseYear(Integer releaseYear);
+    @NotBlank(message = "Username is required")
+    @Column(nullable = false, unique = true)
+    private String userName;
 
-    Page<Music> findByNameContainingIgnoreCase(String name, Pageable pageable);
+    @NotBlank(message = "Password is required")
+    @Column(nullable = false)
+    private String password;
 
-    Page<Music> findByArtistUsernameContainingIgnoreCase(String artistUsername, Pageable pageable);
+    @NotBlank(message = "Email is required")
+    @Email(message = "Email should be valid")
+    @Column(nullable = false, unique = true)
+    private String email;
 
-    Page<Music> findByGenreContainingIgnoreCase(String genre, Pageable pageable);
+    @Column
+    private String firstName;
 
-    Page<Music> findByCategoryContainingIgnoreCase(String category, Pageable pageable);
+    @Column
+    private String lastName;
 
-    // Combined search
-    Page<Music> findByNameContainingIgnoreCaseOrArtistUsernameContainingIgnoreCaseOrGenreContainingIgnoreCase(
-            String name, String artistUsername, String genre, Pageable pageable);
+    @Column
+    private String artistName;
 
-    // Search by title or artist (for CustomerApiController search)
-    Page<Music> findByNameContainingIgnoreCaseOrArtistUsernameContainingIgnoreCase(
-            String name, String artistUsername, Pageable pageable);
+    // Music collection relationship removed - use MusicService.getMusicByArtist(username) instead
 
+    @Column(nullable = false)
+    private String role = "ROLE_ARTIST";
 
-    Optional<Music> findByName(String name);
-    Optional<Music> findByNameContainingIgnoreCase(String name);
+    @Column(name = "photo_url")
+    private String photoUrl;
 
-    // Paginated version for better performance
-    Page<Music> findByArtistUsername(String artistUsername, Pageable pageable);
+    @Column(nullable = false)
+    private boolean enabled = true;
 
-    // Find by genre with pagination
-    Page<Music> findByGenre(String genre, Pageable pageable);
+    @Column(name = "created_at", nullable = true)
+    private LocalDateTime createdAt;
 
-    // Missing methods for AdminApiController functionality
+    public Artist() {}
 
-    // Count methods for analytics
-    long countByArtistUsername(String artistUsername);
+    public Artist(String userName, String email, String artistName) {
+        this.userName = userName;
+        this.email = email;
+        this.artistName = artistName;
+    }
 
-    // Flagged music methods
-    Page<Music> findByIsFlaggedTrue(Pageable pageable);
-    long countByIsFlaggedTrue();
+    // Getters and Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    // Analytics methods
-    @Query("SELECT AVG(m.averageRating) FROM Music m WHERE m.averageRating IS NOT NULL")
-    Double getAverageRating();
+    public String getUserName() { return userName; }
+    public void setUserName(String userName) { this.userName = userName; }
 
-    @Query("SELECT m.genre, COUNT(m) FROM Music m WHERE m.genre IS NOT NULL GROUP BY m.genre")
-    List<Object[]> countByGenreGroupBy();
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
 
-    @Query("SELECT m.category, COUNT(m) FROM Music m WHERE m.category IS NOT NULL GROUP BY m.category")
-    List<Object[]> countByCategoryGroupBy();
+    public String getFirstName() { return firstName; }
+    public void setFirstName(String firstName) { this.firstName = firstName; }
 
-    // Top-rated music for "top selling" placeholder
-    Page<Music> findAllByOrderByAverageRatingDesc(Pageable pageable);
+    public String getLastName() { return lastName; }
+    public void setLastName(String lastName) { this.lastName = lastName; }
 
-    // Artist performance analytics
-    @Query("SELECT m.artistUsername, COUNT(m), AVG(m.averageRating), SUM(m.totalReviews) " +
-            "FROM Music m WHERE m.artistUsername IS NOT NULL " +
-            "GROUP BY m.artistUsername")
-    List<Object[]> getArtistPerformanceStats();
+    public String getArtistName() { return artistName; }
+    public void setArtistName(String artistName) { this.artistName = artistName; }
+
+    public String getPhotoUrl() { return photoUrl; }
+    public void setPhotoUrl(String photoUrl) { this.photoUrl = photoUrl; }
+
+    public String getRole() { return role; }
+    public void setRole(String role) { this.role = role; }
+
+    public boolean isEnabled() { return enabled; }
+    public void setEnabled(boolean enabled) { this.enabled = enabled; }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    // UserDetails implementation
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return Collections.singletonList(new SimpleGrantedAuthority(role));
+    }
+
+    @Override
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
+
+    @Override
+    public String getUsername() { return userName; }
+
+    @Override
+    public boolean isAccountNonExpired() { return true; }
+
+    @Override
+    public boolean isAccountNonLocked() { return true; }
+
+    @Override
+    public boolean isCredentialsNonExpired() { return true; }
+
+//    @Override
+//    public boolean isEnabled() { return enabled; }
+
+    @Override
+    public String toString() {
+        return "Artist{" +
+                "id=" + id +
+                ", userName='" + userName + '\'' +
+                ", email='" + email + '\'' +
+                ", artistName='" + artistName + '\'' +
+                ", photoUrl='" + photoUrl + '\'' +
+                '}';
+    }
 }
