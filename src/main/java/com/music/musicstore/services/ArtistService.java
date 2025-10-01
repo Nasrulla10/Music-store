@@ -128,3 +128,80 @@ public class ArtistService {
             if (artist.getPassword() != null && !artist.getPassword().isEmpty()) {
                 artist.setPassword(passwordEncoder.encode(artist.getPassword()));
             }
+            Artist updatedArtist = artistRepository.save(artist);
+            logger.info("Successfully updated artist: {} (ID: {})", updatedArtist.getUserName(), updatedArtist.getId());
+        } catch (Exception e) {
+            logger.error("Error updating artist: {}", artist.getUserName(), e);
+            throw e;
+        }
+    }
+
+    public void updateArtistUsername(Long id, String newName) {
+        logger.debug("Updating artist username for ID: {} to: {}", id, newName);
+
+        if (id == null) {
+            logger.error("Artist ID is null");
+            throw new ValidationException("Artist ID cannot be null");
+        }
+
+        if (newName == null || newName.trim().isEmpty()) {
+            logger.error("New artist name is null or empty");
+            throw new ValidationException("New artist name cannot be null or empty");
+        }
+
+        try {
+            Artist artist = artistRepository.findById(id)
+                    .orElseThrow(() -> {
+                        logger.error("Artist not found with ID: {}", id);
+                        return new ResourceNotFoundException("Artist", id.toString());
+                    });
+
+            // Check if new username already exists
+            Optional<Artist> existingArtist = artistRepository.findByUserName(newName);
+            if (existingArtist.isPresent() && !existingArtist.get().getId().equals(id)) {
+                logger.error("Username already exists: {}", newName);
+                throw new BusinessRuleException("Username already exists: " + newName);
+            }
+
+            String oldName = artist.getUserName();
+            artist.setUserName(newName);
+            artistRepository.save(artist);
+
+            logger.info("Successfully updated artist username from '{}' to '{}' (ID: {})", oldName, newName, id);
+        } catch (Exception e) {
+            logger.error("Error updating artist username for ID: {}", id, e);
+            throw e;
+        }
+    }
+
+    public Artist findByUsername(String username) {
+        logger.debug("Finding artist by username: {}", username);
+
+        if (username == null || username.trim().isEmpty()) {
+            logger.error("Username is null or empty");
+            throw new ValidationException("Username cannot be null or empty");
+        }
+
+        try {
+            Artist artist = artistRepository.findByUserName(username)
+                    .orElseThrow(() -> {
+                        logger.error("Artist not found with username: {}", username);
+                        return new ResourceNotFoundException("Artist", username);
+                    });
+
+            logger.info("Successfully found artist: {}", username);
+            return artist;
+        } catch (Exception e) {
+            logger.error("Error finding artist by username: {}", username, e);
+            throw e;
+        }
+    }
+
+    public Artist findById(Long id) {
+        logger.debug("Finding artist by ID: {}", id);
+
+        if (id == null) {
+            logger.error("Artist ID is null");
+            throw new ValidationException("Artist ID cannot be null");
+        }
+
